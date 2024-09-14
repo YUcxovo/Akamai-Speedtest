@@ -1,4 +1,5 @@
 .vscode/
+.devcontainer/
 test/
 *.egg-info/
 dist/
