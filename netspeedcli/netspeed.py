@@ -17,7 +17,7 @@ from .servers import SERVERS
 
 app = typer.Typer(add_completion=False)
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 class NetSpeedTest:
 
