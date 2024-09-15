@@ -469,6 +469,9 @@ def curSettings(settings: dict, name: str, value):
 
 @app.command()
 def ip():
+    """
+    IP test.
+    """
     sv, st = getSS()
     test = NetSpeedTest(sv, st)
     test.ipTest()
@@ -476,14 +479,24 @@ def ip():
 
 @app.command()
 def ping(
-    url: Annotated[Optional[str], typer.Argument(callback=url_callback)] = None,
+    url: Annotated[Optional[str], typer.Argument(callback=url_callback, help="[Optional] Accessible url. Also surpport ip address.", show_default=False)] = None,
     settingsPath: Annotated[Optional[Path], typer.Option("--settings", "-s", envvar="AKM_SPEEDTEST_SETTINGS", show_envvar=False,
-                                                callback=settings_callback)] = None ,
-    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback)] = "prev",
-    record: Annotated[bool, typer.Option("--record", "-r")] = False,
-    times: Annotated[Optional[int], typer.Option("--times", "-t")] = None,
-    wait: Annotated[Optional[int], typer.Option("--wait", "-w")] = None
+                                                callback=settings_callback,
+                                                help="Path of the settings file. Other set options will cover the settings.", show_default="Default settings path, always automatically select server. Change default value by setting env variable \"AKM_SPEEDTEST_SETTINGS\"")] 
+                                                = None ,
+    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback,
+                                        help="Target server.\"auto\" represents auto selective. \"prev\" represents previous server record in custom settings, which means it only works when [--settings] is non-default")] 
+                                        = "prev",
+    record: Annotated[bool, typer.Option("--record", "-r", help="Record the linked server in settings. Only works when [--settings] is non-default")] 
+                                        = False,
+    times: Annotated[Optional[int], typer.Option("--times", "-t", help="Number of tests.", show_default="settings")] = None,
+    wait: Annotated[Optional[int], typer.Option("--wait", "-w", help="Time to wait for a response(seconds).", show_default="settings")] = None
 ):
+    """
+    Ping test for a server or an accessible url. 
+    
+    Result includes ping, jitter and loss packect rate.
+    """
     if url is None:
         sv, st = getSS(server, settingsPath, record)
     else:
@@ -498,19 +511,31 @@ def ping(
 @app.command()
 def download(
     settingsPath: Annotated[Optional[Path], typer.Option("--settings", "-s", envvar="AKM_SPEEDTEST_SETTINGS", show_envvar=False,
-                                                callback=settings_callback)] = None ,
-    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback)] = "prev",
-    record: Annotated[bool, typer.Option("--record", "-r")] = False,
-    mode: Annotated[bool, typer.Option("--multi/--single", "-m/-l")] = True,
-    maxTime: Annotated[Optional[int], typer.Option("--max-time", "-t")] = None,
-    timeReduce: Annotated[Optional[bool], typer.Option("--time-reduce/--full-time", "-r/-f")] = None,
-    graceTime: Annotated[Optional[float], typer.Option("--grace-time", "-g", callback=multiOnly)] = None,
-    maxStream: Annotated[Optional[int], typer.Option("--max-stream", "-x", callback=multiOnly)] = None,
-    delay: Annotated[Optional[int], typer.Option("--delay", "-d", callback=multiOnly)] = None,
-    interval: Annotated[Optional[float], typer.Option("--interval", "-i")] = None,
-    package: Annotated[Optional[int], typer.Option("--package", "-p")] = None,
-    chunk: Annotated[Optional[int], typer.Option("--chunk", "-c")] = None
+                                                callback=settings_callback,
+                                                help="Path of the settings file. Other set options will cover the settings.", show_default="Default settings path, always automatically select server. Change default value by setting env variable \"AKM_SPEEDTEST_SETTINGS\"")] 
+                                                = None ,
+    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback,
+                                        help="Target server.\"auto\" represents auto selective. \"prev\" represents previous server record in custom settings, which means it only works when [--settings] is non-default")] 
+                                        = "prev",
+    record: Annotated[bool, typer.Option("--record", "-r", help="Record the linked server in settings. Only works when [--settings] is non-default")] 
+                                        = False,
+    mode: Annotated[bool, typer.Option("--multi/--single", "-m/-l", help="Multi stream test or single stream test.")] = True,
+    maxTime: Annotated[Optional[int], typer.Option("--max-time", "-t", help="Maximum test time(seconds).", show_default="settings")] = None,
+    timeReduce: Annotated[Optional[bool], typer.Option("--time-reduce/--full-time", "-r/-f",
+                                                        help="Automatically reduce time of test or do the full time test.", show_default="settings")] 
+                                                        = None,
+    graceTime: Annotated[Optional[float], typer.Option("--grace-time", "-g", callback=multiOnly, help="Grace time(seconds).", show_default="settings")] = None,
+    maxStream: Annotated[Optional[int], typer.Option("--max-stream", "-x", callback=multiOnly, 
+                                                    help="Maximum test streams. Only works in multi stream test.", show_default="settings")] = None,
+    delay: Annotated[Optional[int], typer.Option("--delay", "-d", callback=multiOnly,
+                                                help="Delay between start times of streams. Only works in multi stream test.(ms)", show_default="settings")] = None,
+    interval: Annotated[Optional[float], typer.Option("--interval", "-i", help="Interval between progress updates(seconds).", show_default="settings")] = None,
+    package: Annotated[Optional[int], typer.Option("--package", "-p", help="Package size(Mb).", show_default="settings")] = None,
+    chunk: Annotated[Optional[int], typer.Option("--chunk", "-c", help="Chunk size in stream(Bytes).", show_default="settings")] = None
 ):
+    """
+    Download speed test.
+    """
     key = "multi" if mode else "single"
     sv, st = getSS(server, settingsPath, record)
     curSettings(st, f"{key}_download_max_time", maxTime)
@@ -531,19 +556,31 @@ def download(
 @app.command()
 def upload(
     settingsPath: Annotated[Optional[Path], typer.Option("--settings", "-s", envvar="AKM_SPEEDTEST_SETTINGS", show_envvar=False,
-                                                callback=settings_callback)] = None ,
-    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback)] = "prev",
-    record: Annotated[bool, typer.Option("--record", "-r")] = False,
-    mode: Annotated[bool, typer.Option("--multi/--single", "-m/-l")] = True,
-    maxTime: Annotated[Optional[int], typer.Option("--max-time", "-t")] = None,
-    timeReduce: Annotated[Optional[bool], typer.Option("--time-reduce/--full-time", "-r/-f")] = None,
-    graceTime: Annotated[Optional[float], typer.Option("--grace-time", "-g", callback=multiOnly)] = None,
-    maxStream: Annotated[Optional[int], typer.Option("--max-stream", "-x", callback=multiOnly)] = None,
-    delay: Annotated[Optional[int], typer.Option("--delay", "-d", callback=multiOnly)] = None,
-    interval: Annotated[Optional[float], typer.Option("--interval", "-i")] = None,
-    package: Annotated[Optional[int], typer.Option("--package", "-p")] = None,
-    chunk: Annotated[Optional[int], typer.Option("--chunk", "-c")] = None
+                                                callback=settings_callback,
+                                                help="Path of the settings file. Other set options will cover the settings.", show_default="Default settings path, always automatically select server. Change default value by setting env variable \"AKM_SPEEDTEST_SETTINGS\"")] 
+                                                = None ,
+    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback,
+                                        help="Target server.\"auto\" represents auto selective. \"prev\" represents previous server record in custom settings, which means it only works when [--settings] is non-default")] 
+                                        = "prev",
+    record: Annotated[bool, typer.Option("--record", "-r", help="Record the linked server in settings. Only works when [--settings] is non-default")] 
+                                        = False,
+    mode: Annotated[bool, typer.Option("--multi/--single", "-m/-l", help="Multi stream test or single stream test.")] = True,
+    maxTime: Annotated[Optional[int], typer.Option("--max-time", "-t", help="Maximum test time(seconds).", show_default="settings")] = None,
+    timeReduce: Annotated[Optional[bool], typer.Option("--time-reduce/--full-time", "-r/-f",
+                                                        help="Automatically reduce time of test or do the full time test.", show_default="settings")] 
+                                                        = None,
+    graceTime: Annotated[Optional[float], typer.Option("--grace-time", "-g", callback=multiOnly, help="Grace time(seconds).", show_default="settings")] = None,
+    maxStream: Annotated[Optional[int], typer.Option("--max-stream", "-x", callback=multiOnly, 
+                                                    help="Maximum test streams. Only works in multi stream test.", show_default="settings")] = None,
+    delay: Annotated[Optional[int], typer.Option("--delay", "-d", callback=multiOnly,
+                                                help="Delay between start times of streams. Only works in multi stream test.(ms)", show_default="settings")] = None,
+    interval: Annotated[Optional[float], typer.Option("--interval", "-i", help="Interval between progress updates(seconds).", show_default="settings")] = None,
+    package: Annotated[Optional[int], typer.Option("--package", "-p", help="Package size(Mb).", show_default="settings")] = None,
+    chunk: Annotated[Optional[int], typer.Option("--chunk", "-c", help="Chunk size in stream(Bytes).", show_default="settings")] = None
 ):
+    """
+    Upload speed test.
+    """
     key = "multi" if mode else "single"
     sv, st = getSS(server, settingsPath, record)
     curSettings(st, f"{key}_upload_max_time", maxTime)
@@ -563,9 +600,12 @@ def upload(
 
 @app.command()
 def monitor(
-    times: Annotated[int, typer.Option("--times", "-t")] = 10,
-    interval: Annotated[float, typer.Option("--interval", "-i")] = 1
+    times: Annotated[int, typer.Option("--times", "-t", help="Number of records.")] = 10,
+    interval: Annotated[float, typer.Option("--interval", "-i", help="Interval between records(seconds).")] = 1
 ):
+    """
+    Monitor the current network sending and receiving speed.
+    """
     sv, st = getSS()
     test = NetSpeedTest(sv, st)
     test.monitorSpeed(times, interval)
@@ -575,11 +615,21 @@ def monitor(
 def main(
     ctx: typer.Context,
     settingsPath: Annotated[Optional[Path], typer.Option("--settings", "-s", envvar="AKM_SPEEDTEST_SETTINGS", show_envvar=False,
-                                               callback=settings_callback)] = None ,
-    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback)] = "prev",
-    record: Annotated[bool, typer.Option("--record", "-r")] = False,
-    _: Annotated[Optional[bool], typer.Option("--version", callback=version_callback, is_eager=True)] = None
+                                                callback=settings_callback,
+                                                help="Path of the settings file. Other set options will cover the settings.", show_default="Default settings path, always automatically select server. Change default value by setting env variable \"AKM_SPEEDTEST_SETTINGS\"")] 
+                                                = None ,
+    server: Annotated[str, typer.Option("--server", "-v", callback=server_callback,
+                                        help="Target server.\"auto\" represents auto selective. \"prev\" represents previous server record in custom settings, which means it only works when [--settings] is non-default")] 
+                                        = "prev",
+    record: Annotated[bool, typer.Option("--record", "-r", help="Record the linked server in settings. Only works when [--settings] is non-default")] 
+                                        = False,
+    _: Annotated[Optional[bool], typer.Option("--version", callback=version_callback, is_eager=True, help="version of CLI")] = None
 ):
+    """
+    Do ip test, ping test, multi-stream download speed test and multi-stream upload speed test in turn.
+    
+    Note that the options before subcommands will be ignored.
+    """
     if ctx.invoked_subcommand is None:
         sv, st = getSS(server, settingsPath, record)
         test = NetSpeedTest(sv, st)
